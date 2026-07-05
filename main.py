@@ -5,13 +5,13 @@ from threading import Thread
 from flask import Flask
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Telegram Bot Tokeni va Admin ID
+# ==========================================
+# ⚙️ ASOSIY SOZLAMALAR (TOKEN VA ADMIN ID)
+# ==========================================
 TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"  # Bu yerga botingiz tokenini yozing
-ADMIN_ID =  6607270447   # Bu yerga o'zingizning Telegram ID'ingizni yozing
+ADMIN_ID =   6607270447   # Bu yerga o'zingizning Telegram ID'ingizni yozing
 
 bot = telebot.TeleBot(TOKEN)
-
-# Render serveri botni o'chirib qo'ymasligi uchun Flask veb-server
 app = Flask(__name__)
 
 @app.route('/')
@@ -22,7 +22,9 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-# Ma'lumotlar ombori (Vaqtinchalik xotira)
+# ==========================================
+# 📊 MA'LUMOTLAR OMBORI VA SOZLAMALAR
+# ==========================================
 user_data = {}
 bot_settings = {
     "majburiy_kanal": None,  
@@ -49,12 +51,11 @@ def get_user(user_id, username=""):
             "oxirgi_bonus": 0,
             "inviter_id": None  
         }
-    if "oxirgi_bonus" not in user_data[user_id]:
-        user_data[user_id]["oxirgi_bonus"] = 0
-    if "inviter_id" not in user_data[user_id]:
-        user_data[user_id]["inviter_id"] = None
     return user_data[user_id]
 
+# ==========================================
+# ⌨️ KLAVIATURA TUGMALARI (KLASSIK MENYU)
+# ==========================================
 def asosiy_menyu():
     markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     markup.row(KeyboardButton("🗳 Ovoz berish"))
@@ -72,6 +73,9 @@ def admin_panel_markup():
     markup.row(InlineKeyboardButton("📝 Tavsifni (Description) o'zgartirish", callback_data="admin_edit_desc"))
     return markup
 
+# ==========================================
+# 🛡 MAJBURIY OBUNA TIZIMI
+# ==========================================
 def check_sub(user_id):
     if bot_settings["majburiy_kanal"]:
         try:
@@ -91,6 +95,9 @@ def check_sub(user_id):
             
     return True
 
+# ==========================================
+# 💬 ADMIN JAVOB TIZIMI (REPLY XABARLAR)
+# ==========================================
 @bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID and message.reply_to_message)
 def admin_reply_to_user(message):
     try:
@@ -108,6 +115,9 @@ def admin_reply_to_user(message):
     except Exception as e:
         bot.reply_to(message, "❌ Xatolik yuz berdi yoki foydalanuvchi botni bloklagan.")
 
+# ==========================================
+# 🛠 ADMIN COMMANDS
+# ==========================================
 @bot.message_handler(commands=['admin'])
 def admin_command(message):
     if message.chat.id == ADMIN_ID:
@@ -115,6 +125,9 @@ def admin_command(message):
     else:
         bot.send_message(message.chat.id, "⚠️ Bu buyruq faqat bot admini uchun!")
 
+# ==========================================
+# 🚀 START COMMAND & REFERRAL LOGIC
+# ==========================================
 @bot.message_handler(commands=['start'])
 def start_command(message):
     user_id = message.chat.id
@@ -154,8 +167,11 @@ def start_command(message):
             except:
                 pass
 
-    bot.send_message(user_id, bot_settings["description"], reply_markup=asosiy_menyo(), parse_mode="Markdown")
+    bot.send_message(user_id, bot_settings["description"], reply_markup=asosiy_menyu(), parse_mode="Markdown")
 
+# ==========================================
+# 📲 ASOSIY MENYU LOGIKASI
+# ==========================================
 def process_menu_logic(message):
     user_id = message.chat.id
     username = message.from_user.username
@@ -272,6 +288,9 @@ def process_menu_logic(message):
         user["balans"] = 0  
         bot.send_message(user_id, "✅ So'rovingiz adminga yuborildi. Tez orada to'lov amalga oshiriladi!")
 
+# ==========================================
+# 📭 HAR QANDAY MULTIMEDIA VA MATNLARNI QABUL QILISH
+# ==========================================
 @bot.message_handler(content_types=['text', 'photo', 'audio', 'video', 'voice', 'document', 'sticker'])
 def handle_all_messages(message):
     user_id = message.chat.id
@@ -332,6 +351,9 @@ def handle_all_messages(message):
 
         process_menu_logic(message)
 
+# ==========================================
+# ⚙️ CALLBACK OPERATORLARI (INLINE INPUTS)
+# ==========================================
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callbacks(call):
     user_id = call.message.chat.id
@@ -413,10 +435,9 @@ def handle_callbacks(call):
         except: pass
 
 if __name__ == '__main__':
-    # Flask serverni alohida oqimda yuklash
     server_thread = Thread(target=run_flask)
     server_thread.daemon = True
     server_thread.start()
     
-    print("Render serverida to'liq bot mukammal ishga tushdi...")
+    print("Mukammal va to'liq bot kodlari ishga tushdi...")
     bot.polling(none_stop=True)
