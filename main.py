@@ -9,7 +9,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 # ⚙️ ASOSIY SOZLAMALAR (TOKEN VA ADMIN ID)
 # ==========================================
 TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"  # Bu yerga botingiz tokenini yozing
-ADMIN_ID =   6607270447   # Bu yerga o'zingizning Telegram ID'ingizni yozing
+ADMIN_ID =    6607270447  # Bu yerga o'zingizning Telegram ID'ingizni yozing
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -216,13 +216,13 @@ def process_menu_logic(message):
             "🤝 *Referral tizimi*\n\n"
             "Do'stlaringizni taklif qiling! Ular botga kirib kanallarga a'zo bo'lishganda siz *1 000 so'm* mukofotga ega bo'lasiz.\n\n"
             f"👥 Taklif qilingan do'stlaringiz: `{user['referallar']}` ta\n\n"
-            f"🔗 Sizning referal havolangiz:\n{referal_link}"
+            f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
-        share_text = f"🔥 Open Budget botida ovoz berib pul ishlang! Har bir taklif uchun 1000 so'm, ovoz uchun 45 000 so'm berilmoqda. Kirish uchun bosing: {referal_link}"
+        share_text = f"🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: {referal_link}"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=share_text))
-        bot.send_message(user_id, matn, reply_markup=markup, parse_mode="Markdown", disable_web_page_preview=True)
+        bot.send_message(user_id, matn, reply_markup=markup, parse_mode="Markdown")
 
     elif text == "🎉 Aksiyalar":
         joriy_vaqt = time.time()
