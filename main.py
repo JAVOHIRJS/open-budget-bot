@@ -2,6 +2,7 @@ import telebot
 import time
 import os
 import sqlite3
+import requests
 from threading import Thread
 from flask import Flask
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
@@ -11,6 +12,9 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 # ==========================================
 TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"  # Bu yerga botingiz tokenini yozing
 ADMIN_ID = 6607270447     # Bu yerga o'zingizning Telegram ID'ingizni yozing
+
+# ⚠️ RENDER HAVOLANGIZNI SHU YERGA YOZING (Server uxlab qolmasligi uchun)
+RENDER_URL = "https://open-budget-bot.onrender.com" 
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -24,6 +28,17 @@ def home():
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
+def keep_alive():
+    """Serverni uxlab qolishdan asrash uchun o'z-o'ziga so'rov yuborish funksiyasi"""
+    time.sleep(10) # Server to'liq yonib olishi uchun biroz kutish
+    while True:
+        try:
+            requests.get(RENDER_URL)
+            print("Keep-alive: Server muvaffaqiyatli 'ping' qilindi.")
+        except Exception as e:
+            print(f"Keep-alive xatolik: {e}")
+        time.sleep(600) # Har 10 daqiqada (600 soniya) qaytariladi
 
 # ==========================================
 # 🗄 SQLITE MA'LUMOTLAR OMBORI TIZIMI
@@ -204,13 +219,11 @@ def start_command(message):
     user_id = message.chat.id
     username = message.from_user.username or "Mavjud emas"
     
-    # Avval bazada bor-yo'qligini tekshirib, yo'q bo'lsa yangi ochadi
     user = get_user(user_id, username)
     
     args = message.text.split()
     if len(args) > 1 and args[1].isdigit():
         referrer_id = int(args[1])
-        # Agar foydalanuvchi yangi bo'lsa va o'zini taklif qilmagan bo'lsa
         if referrer_id != user_id and user["inviter_id"] is None:
             update_user(user_id, {"inviter_id": referrer_id})
             user["inviter_id"] = referrer_id
@@ -518,9 +531,15 @@ def handle_callbacks(call):
         except: pass
 
 if __name__ == '__main__':
+    # 1. Flask serverni alohida oqimda ishga tushirish
     server_thread = Thread(target=run_flask)
     server_thread.daemon = True
     server_thread.start()
+    
+    # 2. Serverni uxlab qolishdan asrovchi oqimni (Keep-Alive) ishga tushirish
+    ping_thread = Thread(target=keep_alive)
+    ping_thread.daemon = True
+    ping_thread.start()
     
     print("Muvaffaqiyatli: 100% Doimiy SQLite bazali bot Render-da ishga tushdi...")
     bot.polling(none_stop=True)
