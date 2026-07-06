@@ -1,4 +1,4 @@
-[7/6/2026 11:30 PM] projects: import telebot
+import telebot
 import time
 import os
 import psycopg2
@@ -17,11 +17,11 @@ ADMIN_ID = 6607270447
 # ⚠️ RENDER HAVOLANGIZ
 RENDER_URL = "https://open-budget-bot.onrender.com" 
 
-# ⚠️ SIZNING TO'G'RILANGAN SUPABASE HAVOLANGIZ
-SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@db.pooler.supabase.com:5432/postgres"
+# ⚠️ TO'G'RILANGAN SUPABASE HAVOLANGIZ (Port Pooler uchun 6543 ga o'zgartirildi)
+SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@db.pooler.supabase.com:6543/postgres"
 
 bot = telebot.TeleBot(TOKEN)
-app = Flask(name)
+app = Flask(__name__)  # <-- Tuzatildi: __name__ bo'lishi shart
 
 @app.route('/')
 def home():
@@ -32,7 +32,7 @@ def run_flask():
     app.run(host="0.0.0.0", port=port)
 
 def keep_alive():
-    time.sleep(10)
+    # time.sleep(10) <-- O'chirildi, Render portni darrov ko'rishi uchun
     while True:
         try:
             requests.get(RENDER_URL)
@@ -45,8 +45,8 @@ def keep_alive():
 # 🗄 SUPABASE POSTGRESQL TIZIMI
 # ==========================================
 def get_db_connection():
-    """Har safar bazaga xavfsiz ulanish hosil qilish"""
-    return psycopg2.connect(SUPABASE_CONN_STRING)
+    """Har safar bazaga xavfsiz ulanish hosil qilish (Timeout qo'shildi)"""
+    return psycopg2.connect(SUPABASE_CONN_STRING, connect_timeout=10)
 
 def init_db():
     conn = get_db_connection()
@@ -76,7 +76,7 @@ def init_db():
 
 def get_user(user_id, username="Mavjud emas"):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = conn.cursor()
     cursor.execute("SELECT balans, referallar, holat, karta, oxirgi_bonus, inviter_id, taklif_qilindi FROM users WHERE user_id = %s", (user_id,))
     row = cursor.fetchone()
     
@@ -103,7 +103,6 @@ def update_user(user_id, data):
     for key, value in data.items():
         if key == "taklif_qilindi":
             value = 1 if value else 0
-        # SQL Injection'dan himoya qilish uchun %s formatida yoziladi
         cursor.execute(f"UPDATE users SET {key} = %s WHERE user_id = %s", (value, user_id))
     conn.commit()
     cursor.close()
@@ -129,7 +128,8 @@ def get_all_user_ids():
 
 # Bazani yaratish
 init_db()
-[7/6/2026 11:30 PM] projects: # ==========================================
+
+# ==========================================
 # 📊 BOT SOZLAMALARI
 # ==========================================
 bot_settings = {
@@ -220,7 +220,8 @@ def admin_command(message):
             bot.send_message(ADMIN_ID, "🛠 Mukammal Admin Panelga xush kelibsiz!\nQuyidagi amallardan birini tanlang:", reply_markup=admin_panel_markup())
     else:
         bot.send_message(message.chat.id, "⚠️ Bu buyruq faqat bot admini uchun!")
-[7/6/2026 11:30 PM] projects: # ==========================================
+
+# ==========================================
 # 🚀 START COMMAND & REFERRAL LOGIC
 # ==========================================
 @bot.message_handler(commands=['start'])
@@ -303,7 +304,8 @@ def process_menu_logic(message):
         else:
             update_user(user_id, {"holat": "kutish_karta"})
             bot.send_message(user_id, "💳 Pulni yechish uchun plastik karta raqamingizni yoki telefon raqamingizni kiriting:")
-[7/6/2026 11:30 PM] projects: elif text == "🔗 Referal ssilka":
+
+    elif text == "🔗 Referal ssilka":
         bot_info = bot.get_me()
         referal_link = f"https://t.me/{bot_info.username}?start={user_id}"
         
@@ -389,8 +391,9 @@ def process_menu_logic(message):
         )
         bot.send_message(ADMIN_ID, admin_matn)
         bot.send_message(user_id, "✅ So'rovingiz adminga yuborildi. Tez orada to'lov amalga oshiriladi!")
-[7/6/2026 11:30 PM] projects: # ==========================================
-# 📭 MULTIMEDIA VA MATNLAR ISHLOVCHI
+
+# ==========================================
+# 🗄 MULTIMEDIA VA MATNLAR ISHLOVCHI
 # ==========================================
 @bot.message_handler(content_types=['text', 'photo', 'audio', 'video', 'voice', 'document', 'sticker'])
 def handle_all_messages(message):
@@ -452,7 +455,8 @@ def handle_all_messages(message):
             return
 
         process_menu_logic(message)
-[7/6/2026 11:30 PM] projects: # ==========================================
+
+# ==========================================
 # ⚙️ CALLBACK OPERATORLARI (INLINE INPUTS)
 # ==========================================
 @bot.callback_query_handler(func=lambda call: True)
@@ -527,7 +531,8 @@ def handle_callbacks(call):
         try:
             bot.send_message(target_user_id, "🎉 Ovozingiz muvaffaqiyatli tasdiqlandi! Hisobingizga 45 000 so'm qo'shildi.")
         except: pass
-[7/6/2026 11:30 PM] projects: elif call.data.startswith("wrong_code_"):
+
+    elif call.data.startswith("wrong_code_"):
         target_user_id = int(call.data.split("_")[2])
         bot.answer_callback_query(call.id, text="Rad etildi!")
         bot.edit_message_text(call.message.text + "\n\n❌ Kod xato deb rad etildi!", ADMIN_ID, call.message.message_id)
@@ -535,7 +540,7 @@ def handle_callbacks(call):
             bot.send_message(target_user_id, "❌ Siz kiritgan SMS kod noto‘g‘ri yoki bu raqam avval ishlatilgan.")
         except: pass
 
-if name == 'main':
+if __name__ == '__main__':  # <-- Tuzatildi: __name__ va __main__ ko'rinishiga keltirildi
     server_thread = Thread(target=run_flask)
     server_thread.daemon = True
     server_thread.start()
