@@ -14,13 +14,16 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"
 ADMIN_ID = 6607270447
 
-# ⚠️ RENDER HAVOLANGIZNI SHU YERGA YOZING
+# ⚠️ RENDER HAVOLANGIZ
 RENDER_URL = "https://open-budget-bot.onrender.com"
 
-# ⚠️ SUPABASE'DAN OLGAN URI HAVOLANGIZNI SHU YERGA QO'YING
-
+# ⚠️ SUPABASE HAVOLANGIZ
 SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@15.237.146.191:5432/postgres"
 bot = telebot.TeleBot(TOKEN)
+
+# ==========================================
+# 🌐 RENDER PORTINI TINCHLANTIRISH (FLASK)
+# ==========================================
 app = Flask(__name__)
 
 @app.route('/')
@@ -31,7 +34,7 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-def keep_alive():
+def keep_alive_ping():
     time.sleep(10)
     while True:
         try:
@@ -316,7 +319,6 @@ def process_menu_logic(message):
             f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
-        # ⚡️ O'ZGARTIRILGAN QISM: Havola ikkinchi rasmdagidek to'g'ri integratsiya bo'lishi uchun havola matni boshiga qo'shildi
         share_text = f"https://t.me/{bot_info.username}?start={user_id} 🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: https://t.me/{bot_info.username}?start={user_id}"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=share_text))
@@ -348,7 +350,6 @@ def process_menu_logic(message):
                 bot.send_message(user_id, matn.replace("*", ""))
 
     elif text == "💸 To'lovlar isboti":
-        # ⚡️ O'ZGARTIRILGAN QISM: Matn ichidagi link olib tashlandi va Inline Knopkaga ko'chirildi.
         matn = "✅ Amalga oshirilgan to'lovlarni pastdagi maxsus kanal orqali to'liq kuzatib borishingiz mumkin:"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("👁 Isbotlarni ko'rish", url="https://t.me/openbudgetisbot"))
@@ -506,77 +507,3 @@ def handle_callbacks(call):
         bot.answer_callback_query(call.id)
         update_user(ADMIN_ID, {"holat": "kutish_kanal"})
         hozirgi = bot_settings["majburiy_kanal"] or "Yo'q"
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🤖 Botni Kanalga Admin Qilish", url=f"https://t.me/{bot_info.username}?startchannel=true&admin=post_messages+edit_messages+delete_messages+invite_users"))
-        bot.send_message(ADMIN_ID, f"📢 Hozirgi kanal: {hozirgi}\nYangi kanal usernamesini yuboring yoki o'chirish uchun `0` yozing:", reply_markup=markup)
-
-    elif call.data == "admin_manage_group":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_guruh"})
-        hozirgi = bot_settings["majburiy_guruh"] or "Yo'q"
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🤖 Botni Guruhga Admin Qilish", url=f"https://t.me/{bot_info.username}?startgroup=true&admin=post_messages+edit_messages+delete_messages+invite_users"))
-        bot.send_message(ADMIN_ID, f"💬 Hozirgi guruh: {hozirgi}\nYangi guruh usernamesini yuboring yoki o'chirish uchun `0` yozing:", reply_markup=markup)
-
-    elif call.data == "admin_edit_desc":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_desc"})
-        bot.send_message(ADMIN_ID, "📝 Yangi bot tavsifi (Description) matnini yuboring:")
-
-    elif call.data.startswith("add_45000_"):
-        target_user_id = int(call.data.split("_")[2])
-        target_user = get_user(target_user_id)
-        update_user(target_user_id, {"balans": target_user["balans"] + 45000})
-        bot.answer_callback_query(call.id, text="45 000 so'm qo'shildi!")
-        bot.edit_message_text(call.message.text + "\n\n✅ Ovoz tasdiqlandi! (+45 000 so'm)", ADMIN_ID, call.message.message_id)
-        try:
-            bot.send_message(target_user_id, "🎉 Ovozingiz muvaffaqiyatli tasdiqlandi! Hisobingizga 45 000 so'm qo'shildi.")
-        except: pass
-
-    elif call.data.startswith("wrong_code_"):
-        target_user_id = int(call.data.split("_")[2])
-        bot.answer_callback_query(call.id, text="Rad etildi!")
-        bot.edit_message_text(call.message.text + "\n\n❌ Kod xato deb rad etildi!", ADMIN_ID, call.message.message_id)
-        try:
-            bot.send_message(target_user_id, "❌ Siz kiritgan SMS kod noto‘g‘ri yoki bu raqam avval ishlatilgan.")
-        except: pass
-
-if __name__ == '__main__':
-    server_thread = Thread(target=run_flask)
-    server_thread.daemon = True
-    server_thread.start()
-    
-    ping_thread = Thread(target=keep_alive)
-    ping_thread.daemon = True
-    ping_thread.start()
-
-    import os
-from threading import Thread
-from flask import Flask
-
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot ishlamoqda!"
-
-def run():
-    # Render avtomat beradigan portni oladi yoki 8080 portni ochadi
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
-
-# Portni alohida oqimda (thread) ishga tushiramiz
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-if __name__ == "__main__":
-    # Render portni ko'rishi uchun serverni yoqamiz
-    keep_alive()
-    
-    print("Bot muvaffaqiyatli ishga tushdi...")
-    # Sizning botingizni ishga tushirish qatori (mavjud qatorni qoldiring):
-    bot.infinity_polling()
-    
-    print("Muvaffaqiyatli: 100% Doimiy Supabase PostgreSQL bazali bot Render-da ishga tushdi...")
-    bot.polling(none_stop=True)
