@@ -19,7 +19,7 @@ RENDER_URL = "https://open-budget-bot.onrender.com"
 
 # ⚠️ SUPABASE'DAN OLGAN URI HAVOLANGIZNI SHU YERGA QO'YING
 
-SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@db.pooler.supabase.com:5432/postgres"
+SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@15.237.146.191:5432/postgres"
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
