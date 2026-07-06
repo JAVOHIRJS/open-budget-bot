@@ -549,6 +549,34 @@ if __name__ == '__main__':
     ping_thread = Thread(target=keep_alive)
     ping_thread.daemon = True
     ping_thread.start()
+
+    import os
+from threading import Thread
+from flask import Flask
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot ishlamoqda!"
+
+def run():
+    # Render avtomat beradigan portni oladi yoki 8080 portni ochadi
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+# Portni alohida oqimda (thread) ishga tushiramiz
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+if __name__ == "__main__":
+    # Render portni ko'rishi uchun serverni yoqamiz
+    keep_alive()
+    
+    print("Bot muvaffaqiyatli ishga tushdi...")
+    # Sizning botingizni ishga tushirish qatori (mavjud qatorni qoldiring):
+    bot.infinity_polling()
     
     print("Muvaffaqiyatli: 100% Doimiy Supabase PostgreSQL bazali bot Render-da ishga tushdi...")
     bot.polling(none_stop=True)
