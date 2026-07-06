@@ -1,7 +1,8 @@
 import telebot
 import time
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import requests
 from threading import Thread
 from flask import Flask
@@ -10,52 +11,56 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 # ==========================================
 # ⚙️ ASOSIY SOZLAMALAR (TOKEN VA ADMIN ID)
 # ==========================================
-TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"  # Bu yerga botingiz tokenini yozing
-ADMIN_ID = 6607270447     # Bu yerga o'zingizning Telegram ID'ingizni yozing
+TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"
+ADMIN_ID = 6607270447
 
-# ⚠️ RENDER HAVOLANGIZNI SHU YERGA YOZING (Server uxlab qolmasligi uchun)
-RENDER_URL = "https://open-budget-bot.onrender.com" 
+# ⚠️ RENDER HAVOLANGIZNI SHU YERGA YOZING
+https://open-budget-bot.onrender.com = "https://loyiha-nomi.onrender.com" 
+
+# ⚠️ SUPABASE'DAN OLGAN URI HAVOLANGIZNI SHU YERGA QO'YING
+b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043 = "postgresql://postgres:[parol]...pooler.supabase.com:5432/postgres"
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-DB_FILE = "open_budget.db"
-
 @app.route('/')
 def home():
-    return "Bot va Baza faol ishlamoqda!"
+    return "Bot va Masofaviy Baza faol ishlamoqda!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
 def keep_alive():
-    """Serverni uxlab qolishdan asrash uchun o'z-o'ziga so'rov yuborish funksiyasi"""
-    time.sleep(10) # Server to'liq yonib olishi uchun biroz kutish
+    time.sleep(10)
     while True:
         try:
             requests.get(RENDER_URL)
             print("Keep-alive: Server muvaffaqiyatli 'ping' qilindi.")
         except Exception as e:
             print(f"Keep-alive xatolik: {e}")
-        time.sleep(600) # Har 10 daqiqada (600 soniya) qaytariladi
+        time.sleep(600)
 
 # ==========================================
-# 🗄 SQLITE MA'LUMOTLAR OMBORI TIZIMI
+# 🗄 SUPABASE POSTGRESQL TIZIMI
 # ==========================================
+def get_db_connection():
+    """Har safar bazaga xavfsiz ulanish hosil qilish"""
+    return psycopg2.connect(SUPABASE_CONN_STRING)
+
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
+            user_id BIGINT PRIMARY KEY,
             username TEXT,
             balans INTEGER DEFAULT 0,
             referallar INTEGER DEFAULT 0,
             holat TEXT,
             karta TEXT,
             oxirgi_bonus REAL DEFAULT 0,
-            inviter_id INTEGER,
+            inviter_id BIGINT,
             taklif_qilindi INTEGER DEFAULT 0
         )
     ''')
@@ -66,19 +71,21 @@ def init_db():
         )
     ''')
     conn.commit()
+    cursor.close()
     conn.close()
 
 def get_user(user_id, username="Mavjud emas"):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT balans, referallar, holat, karta, oxirgi_bonus, inviter_id, taklif_qilindi FROM users WHERE user_id = ?", (user_id,))
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor.execute("SELECT balans, referallar, holat, karta, oxirgi_bonus, inviter_id, taklif_qilindi FROM users WHERE user_id = %s", (user_id,))
     row = cursor.fetchone()
     
     if row is None:
-        cursor.execute("INSERT INTO users (user_id, username, balans, referallar, oxirgi_bonus) VALUES (?, ?, 0, 0, 0)", (user_id, username))
+        cursor.execute("INSERT INTO users (user_id, username, balans, referallar, oxirgi_bonus) VALUES (%s, %s, 0, 0, 0)", (user_id, username))
         conn.commit()
-        row = (0, 0, None, None, 0, None, 0)
+        row = [0, 0, None, None, 0, None, 0]
     
+    cursor.close()
     conn.close()
     return {
         "balans": row[0],
@@ -91,32 +98,36 @@ def get_user(user_id, username="Mavjud emas"):
     }
 
 def update_user(user_id, data):
-    conn = sqlite3.connect(DB_FILE)
+    conn = get_db_connection()
     cursor = conn.cursor()
     for key, value in data.items():
         if key == "taklif_qilindi":
             value = 1 if value else 0
-        cursor.execute(f"UPDATE users SET {key} = ? WHERE user_id = ?", (value, user_id))
+        # SQL Injection'dan himoya qilish uchun %s formatida yoziladi
+        cursor.execute(f"UPDATE users SET {key} = %s WHERE user_id = %s", (value, user_id))
     conn.commit()
+    cursor.close()
     conn.close()
 
 def get_total_users():
-    conn = sqlite3.connect(DB_FILE)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM users")
     count = cursor.fetchone()[0]
+    cursor.close()
     conn.close()
     return count
 
 def get_all_user_ids():
-    conn = sqlite3.connect(DB_FILE)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM users")
     ids = [row[0] for row in cursor.fetchall()]
+    cursor.close()
     conn.close()
     return ids
 
-# Baza yaratishni ishga tushiramiz
+# Bazani yaratish
 init_db()
 
 # ==========================================
@@ -531,15 +542,13 @@ def handle_callbacks(call):
         except: pass
 
 if __name__ == '__main__':
-    # 1. Flask serverni alohida oqimda ishga tushirish
     server_thread = Thread(target=run_flask)
     server_thread.daemon = True
     server_thread.start()
     
-    # 2. Serverni uxlab qolishdan asrovchi oqimni (Keep-Alive) ishga tushirish
     ping_thread = Thread(target=keep_alive)
     ping_thread.daemon = True
     ping_thread.start()
     
-    print("Muvaffaqiyatli: 100% Doimiy SQLite bazali bot Render-da ishga tushdi...")
+    print("Muvaffaqiyatli: 100% Doimiy Supabase PostgreSQL bazali bot Render-da ishga tushdi...")
     bot.polling(none_stop=True)
