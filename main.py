@@ -13,10 +13,11 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 # ==========================================
 TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"
 ADMIN_ID = 6607270447
-
-# Render va Supabase ma'lumotlarini to'g'ri o'zgaruvchilarga joylaymiz:
 RENDER_URL = "https://open-budget-bot.onrender.com" 
-SUPABASE_CONN_STRING = "postgresql://postgres:b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043@db.b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043.supabase.com:6543/postgres"
+
+# 🔥 PAROLINGIZ BILAN TAYYOR SUPABASE ULANISH HAVOLASI:
+# (Parolingizdagi '?' belgisi ulanish xavfsizligi uchun '%3F' ga o'tkazildi)
+SUPABASE_CONN_STRING = "postgresql://postgres:4-FFz2C5x%3Fs4MbL@db.fbbdoupcsabgrplmqdrk.supabase.co:5432/postgres?connect_timeout=10"
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -123,8 +124,12 @@ def get_all_user_ids():
     conn.close()
     return ids
 
-# Bazani tekshirish/yaratish
-init_db()
+# Bazani tekshirish va jadvallarni ochish
+try:
+    init_db()
+    print("Muvaffaqiyatli: Supabase jadvallari yaratildi/tekshirildi.")
+except Exception as database_error:
+    print(f"Baza bilan bog'lanishda xatolik: {database_error}")
 
 # ==========================================
 # 📊 BOT SOZLAMALARI VA MENYULAR
@@ -238,8 +243,7 @@ def start_command(message):
         update_user(user_id, {"taklif_qilindi": True})
         try:
             bot.send_message(ref_id, "🎉 Do'stingiz botga qo'shildi! Balansingizga +1000 so'm qo'shildi.")
-        except:
-            pass
+        except: pass
 
     bot.send_message(user_id, bot_settings["description"], reply_markup=asosiy_menyu(), parse_mode="Markdown")
 
@@ -251,8 +255,7 @@ def process_menu_logic(message):
 
     if text == "🗳 Ovoz berish":
         update_user(user_id, {"holat": "kutish_telefon"})
-        matn = "📞 Ovoz berish uchun telefon raqamni kiriting:\n\nFormat: +998991234567 yoki 991234567"
-        bot.send_message(user_id, matn)
+        bot.send_message(user_id, "📞 Ovoz berish uchun telefon raqamni kiriting:\n\nFormat: +998991234567 yoki 991234567")
 
     elif text == "💰 Balans":
         karta_matn = user["karta"] if user["karta"] else "Kiritilmagan"
@@ -313,7 +316,7 @@ def process_menu_logic(message):
         bot.send_message(user_id, "✅ So'rov adminga yuborildi.")
 
 # ==========================================
-# 📭 MATN VA MULTIMEDIA INTEGRATSIYASI
+# 📭 REKLAMA VA MULTIMEDIA INTEGRATSIYASI
 # ==========================================
 @bot.message_handler(content_types=['text', 'photo', 'audio', 'video', 'voice', 'document', 'sticker'])
 def handle_all_messages(message):
@@ -406,59 +409,3 @@ def handle_callbacks(call):
     elif call.data == "admin_stats":
         bot.answer_callback_query(call.id)
         bot.send_message(ADMIN_ID, f"📊 Jami foydalanuvchilar: {get_total_users()} ta")
-        
-    elif call.data == "admin_send_reklama":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_reklama"})
-        bot.send_message(ADMIN_ID, "📢 Istalgan formatdagi reklamani yuboring:")
-
-    elif call.data == "admin_manage_channel":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_kanal"})
-        hozirgi = bot_settings["majburiy_kanal"] or "Yo'q"
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🤖 Admin Qilish", url=f"https://t.me/{bot_info.username}?startchannel=true"))
-        bot.send_message(ADMIN_ID, f"📢 Hozirgi kanal: {hozirgi}\nYangi kanal usernamesini kiriting (yoki o'chirish uchun 0):", reply_markup=markup)
-
-    elif call.data == "admin_manage_group":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_guruh"})
-        hozirgi = bot_settings["majburiy_guruh"] or "Yo'q"
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🤖 Admin Qilish", url=f"https://t.me/{bot_info.username}?startgroup=true"))
-        bot.send_message(ADMIN_ID, f"💬 Hozirgi guruh: {hozirgi}\nYangi guruh usernamesini kiriting (yoki o'chirish uchun 0):", reply_markup=markup)
-
-    elif call.data == "admin_edit_desc":
-        bot.answer_callback_query(call.id)
-        update_user(ADMIN_ID, {"holat": "kutish_desc"})
-        bot.send_message(ADMIN_ID, "📝 Yangi bot tavsifi matnini kiriting:")
-
-    elif call.data.startswith("add_45000_"):
-        target_user_id = int(call.data.split("_")[2])
-        target_user = get_user(target_user_id)
-        update_user(target_user_id, {"balans": target_user["balans"] + 45000})
-        bot.answer_callback_query(call.id, text="45 000 so'm qo'shildi!")
-        bot.edit_message_text(call.message.text + "\n\n✅ Ovoz tasdiqlandi! (+45 000 so'm)", ADMIN_ID, call.message.message_id)
-        try:
-            bot.send_message(target_user_id, "🎉 Ovozingiz muvaffaqiyatli tasdiqlandi! Hisobingizga 45 000 so'm qo'shildi.")
-        except: pass
-
-    elif call.data.startswith("wrong_code_"):
-        target_user_id = int(call.data.split("_")[2])
-        bot.answer_callback_query(call.id, text="Rad etildi!")
-        bot.edit_message_text(call.message.text + "\n\n❌ Kod xato deb rad etildi!", ADMIN_ID, call.message.message_id)
-        try:
-            bot.send_message(target_user_id, "❌ Siz kiritgan SMS kod noto‘g‘ri yoki bu raqam avval ishlatilgan.")
-        except: pass
-
-if __name__ == '__main__':
-    server_thread = Thread(target=run_flask)
-    server_thread.daemon = True
-    server_thread.start()
-    
-    ping_thread = Thread(target=keep_alive)
-    ping_thread.daemon = True
-    ping_thread.start()
-    
-    print("Muvaffaqiyatli: Bot Render platformasida ishga tushdi...")
-    bot.polling(none_stop=True)
