@@ -15,9 +15,10 @@ TOKEN = "8804847521:AAGVqDdkmc0hHdrDVLgpGQ7WDDBsFrGWC5s"
 ADMIN_ID = 6607270447
 
 # ⚠️ RENDER HAVOLANGIZNI SHU YERGA YOZING
-https://open-budget-bot.onrender.com = "https://loyiha-nomi.onrender.com" 
+https://open-budget-bot.onrender.com = "https://open-budget-bot.onrender.com" 
 
 # ⚠️ SUPABASE'DAN OLGAN URI HAVOLANGIZNI SHU YERGA QO'YING
+
 b62d486d6a9f1279a6ae96ca2bf3bfe19778c438d87dd259d0fd1f08e095d043 = "postgresql://postgres:[parol]...pooler.supabase.com:5432/postgres"
 
 bot = telebot.TeleBot(TOKEN)
@@ -103,7 +104,6 @@ def update_user(user_id, data):
     for key, value in data.items():
         if key == "taklif_qilindi":
             value = 1 if value else 0
-        # SQL Injection'dan himoya qilish uchun %s formatida yoziladi
         cursor.execute(f"UPDATE users SET {key} = %s WHERE user_id = %s", (value, user_id))
     conn.commit()
     cursor.close()
@@ -317,7 +317,8 @@ def process_menu_logic(message):
             f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
-        share_text = f"🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: {referal_link}"
+        # ⚡️ O'ZGARTIRILGAN QISM: Havola ikkinchi rasmdagidek to'g'ri integratsiya bo'lishi uchun havola matni boshiga qo'shildi
+        share_text = f"https://t.me/{bot_info.username}?start={user_id} 🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: https://t.me/{bot_info.username}?start={user_id}"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=share_text))
         try:
@@ -348,11 +349,11 @@ def process_menu_logic(message):
                 bot.send_message(user_id, matn.replace("*", ""))
 
     elif text == "💸 To'lovlar isboti":
-        matn = (
-            "✅ Amalga oshirilgan to'lovlarni quyidagi kanalda ko'rishingiz mumkin:\n"
-            "👉 https://t.me/openbudgetisbot"
-        )
-        bot.send_message(user_id, matn)
+        # ⚡️ O'ZGARTIRILGAN QISM: Matn ichidagi link olib tashlandi va Inline Knopkaga ko'chirildi.
+        matn = "✅ Amalga oshirilgan to'lovlarni pastdagi maxsus kanal orqali to'liq kuzatib borishingiz mumkin:"
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("👁 Isbotlarni ko'rish", url="https://t.me/openbudgetisbot"))
+        bot.send_message(user_id, matn, reply_markup=markup)
 
     elif user["holat"] == "kutish_telefon":
         admin_matn = (
