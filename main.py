@@ -17,8 +17,7 @@ RENDER_URL = "https://open-budget-bot.onrender.com"
 
 # 🔥 PAROLINGIZ BILAN TAYYOR SUPABASE ULANISH HAVOLASI:
 # (Parolingizdagi '?' belgisi ulanish xavfsizligi uchun '%3F' ga o'tkazildi)
-SUPABASE_CONN_STRING = "postgresql://postgres:4-FFz2C5x%3Fs4MbL@db.fbbdoupcsabgrplmqdrk.supabase.co:5432/postgres?connect_timeout=10"
-
+SUPABASE_CONN_STRING = "postgresql://postgres:4-FFz2C5x%3Fs4MbL@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?connect_timeout=10"
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
