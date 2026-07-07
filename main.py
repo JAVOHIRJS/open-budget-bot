@@ -516,7 +516,7 @@ def handle_callbacks(call):
         try:
             bot.send_message(target_user_id, "🎉 Ovozingiz muvaffaqiyatli tasdiqlandi! Hisobingizga 45 000 so'm qo'shildi.")
         except: pass
-        elif call.data.startswith("wrong_code_"):
+    elif call.data.startswith("wrong_code_"):
         target_user_id = int(call.data.split("_")[2])
         bot.answer_callback_query(call.id, text="Rad etildi!")
         bot.edit_message_text(call.message.text + "\n\n❌ Kod xato deb rad etildi!", ADMIN_ID, call.message.message_id)
