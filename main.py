@@ -296,8 +296,7 @@ def process_menu_logic(message):
             bot.send_message(user_id, "💳 Pulni yechish uchun plastik karta raqamingizni yoki telefon raqamingizni kiriting:")
 
     elif text == "🔗 Referal ssilka":
-        bot_info = bot.get_me()
-        referal_link = f"https://t.me/{bot_info.username}?start={user_id}"
+        referal_link = f"https://t.me/Openbudget24_bot?start={user_id}"
         
         matn = (
             "🤝 *Referral tizimi*\n\n"
@@ -306,7 +305,7 @@ def process_menu_logic(message):
             f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
-        share_text = f"🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: {referal_link}"
+        share_text = f"https://t.me/Openbudget24_bot?start={user_id}\n\n🔥 Open Budget botida ovoz berib pul ishlang!"
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=share_text))
         try:
@@ -337,11 +336,10 @@ def process_menu_logic(message):
                 bot.send_message(user_id, matn.replace("*", ""))
 
     elif text == "💸 To'lovlar isboti":
-        matn = (
-            "✅ Amalga oshirilgan to'lovlarni quyidagi kanalda ko'rishingiz mumkin:\n"
-            "👉 https://t.me/openbudgetisbot"
-        )
-        bot.send_message(user_id, matn)
+        matn = "✅ Amalga oshirilgan to'lovlarni pastdagi tugma orqali rasmiy kanalimizda ko'rishingiz mumkin:"
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("📢 To'lovlar isboti kanali", url="https://t.me/openbudgetisbot"))
+        bot.send_message(user_id, matn, reply_markup=markup)
 
     elif user["holat"] == "kutish_telefon":
         admin_matn = (
