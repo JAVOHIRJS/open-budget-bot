@@ -118,7 +118,7 @@ def get_all_user_ids():
 
 # Baza yaratishni ishga tushiramiz
 init_db()
- # ==========================================
+# ==========================================
 # 📊 BOT SOZLAMALARI
 # ==========================================
 bot_settings = {
@@ -209,7 +209,7 @@ def admin_command(message):
             bot.send_message(ADMIN_ID, "🛠 Mukammal Admin Panelga xush kelibsiz!\nQuyidagi amallardan birini tanlang:", reply_markup=admin_panel_markup())
     else:
         bot.send_message(message.chat.id, "⚠️ Bu buyruq faqat bot admini uchun!")
-# ==========================================
+        # ==========================================
 # 🚀 START COMMAND & REFERRAL LOGIC
 # ==========================================
 @bot.message_handler(commands=['start'])
@@ -292,7 +292,7 @@ def process_menu_logic(message):
         else:
             update_user(user_id, {"holat": "kutish_karta"})
             bot.send_message(user_id, "💳 Pulni yechish uchun plastik karta raqamingizni yoki telefon raqamingizni kiriting:")
-    elif text == "🔗 Referal ssilka":
+            elif text == "🔗 Referal ssilka":
         bot_info = bot.get_me()
         referal_link = f"https://t.me/{bot_info.username}?start={user_id}"
         
@@ -378,7 +378,7 @@ def process_menu_logic(message):
         )
         bot.send_message(ADMIN_ID, admin_matn)
         bot.send_message(user_id, "✅ So'rovingiz adminga yuborildi. Tez orada to'lov amalga oshiriladi!")
- # ==========================================
+        # ==========================================
 # 📭 MULTIMEDIA VA MATNLAR ISHLOVCHI
 # ==========================================
 @bot.message_handler(content_types=['text', 'photo', 'audio', 'video', 'voice', 'document', 'sticker'])
@@ -441,7 +441,7 @@ def handle_all_messages(message):
             return
 
         process_menu_logic(message)
-# ==========================================
+        # ==========================================
 # ⚙️ CALLBACK OPERATORLARI (INLINE INPUTS)
 # ==========================================
 @bot.callback_query_handler(func=lambda call: True)
@@ -516,7 +516,7 @@ def handle_callbacks(call):
         try:
             bot.send_message(target_user_id, "🎉 Ovozingiz muvaffaqiyatli tasdiqlandi! Hisobingizga 45 000 so'm qo'shildi.")
         except: pass
-    elif call.data.startswith("wrong_code_"):
+            elif call.data.startswith("wrong_code_"):
         target_user_id = int(call.data.split("_")[2])
         bot.answer_callback_query(call.id, text="Rad etildi!")
         bot.edit_message_text(call.message.text + "\n\n❌ Kod xato deb rad etildi!", ADMIN_ID, call.message.message_id)
