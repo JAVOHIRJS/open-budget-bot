@@ -2,3 +2,13 @@ pyTelegramBotAPI
 Flask
 requests
 psycopg2-binary
+
+
+
+
+
+telebot
+flask
+requests
+pymongo
+dnspython
