@@ -3,6 +3,7 @@ import time
 import os
 import sqlite3
 import requests
+import urllib.parse
 from threading import Thread
 from flask import Flask
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
@@ -305,9 +306,16 @@ def process_menu_logic(message):
             f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
+        # 2-rasmdagi matnni aynan o'zini shakllantiramiz
+        ulashish_matni = f"Https://t.me/Openbudget24_bot 🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: {referal_link}"
+        
+        # Matnni URL uchun xavfsiz formatga o'tkazamiz
+        encoded_text = urllib.parse.quote(ulashish_matni)
+        
         markup = InlineKeyboardMarkup()
-        # switch_inline_query ichiga faqat user_id ni uzatamiz, handler uni chiroyli link qiladi
-        markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=str(user_id)))
+        # switch_inline_query o'rniga URL orqali share qilamiz
+        markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", url=f"https://t.me/share/url?text={encoded_text}"))
+        
         try:
             bot.send_message(user_id, matn, reply_markup=markup, parse_mode="Markdown")
         except:
@@ -393,9 +401,11 @@ def query_text(inline_query):
             
         referal_link = f"https://t.me/Openbudget24_bot?start={user_id}"
         
-        # Telegram boshiga @username ni qo'shsa ham, matn faqat havola ko'rinishida ketadi
+        # 2-rasmdagi format
+        share_text = f"Https://t.me/Openbudget24_bot 🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun bosing: {referal_link}"
+        
         msg_content = InputTextMessageContent(
-            message_text=f"{referal_link}\n\n🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun ustiga bosing.",
+            message_text=share_text,
             disable_web_page_preview=False
         )
         
@@ -570,5 +580,5 @@ if __name__ == '__main__':
     ping_thread.daemon = True
     ping_thread.start()
     
-    print("Muvaffaqiyatli: 100% Doimiy SQLite bazali bot Render-da ishga tushdi...")
+    print("Muvaffaqiyatli: 100% Doimiy SQLite bazali bot ishga tushdi...")
     bot.polling(none_stop=True)
