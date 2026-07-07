@@ -5,7 +5,7 @@ import sqlite3
 import requests
 from threading import Thread
 from flask import Flask
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 
 # ==========================================
 # ⚙️ ASOSIY SOZLAMALAR (TOKEN VA ADMIN ID)
@@ -305,9 +305,9 @@ def process_menu_logic(message):
             f"🔗 Sizning referal havolangiz (Ustiga bossangiz ko'chadi):\n`{referal_link}`"
         )
         
-        share_text = f"https://t.me/Openbudget24_bot?start={user_id}\n\n🔥 Open Budget botida ovoz berib pul ishlang!"
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=share_text))
+        # switch_inline_query ichiga faqat user_id ni uzatamiz, handler uni chiroyli link qiladi
+        markup.add(InlineKeyboardButton("🚀 Do'stlarga ulashish", switch_inline_query=str(user_id)))
         try:
             bot.send_message(user_id, matn, reply_markup=markup, parse_mode="Markdown")
         except:
@@ -379,6 +379,37 @@ def process_menu_logic(message):
         )
         bot.send_message(ADMIN_ID, admin_matn)
         bot.send_message(user_id, "✅ So'rovingiz adminga yuborildi. Tez orada to'lov amalga oshiriladi!")
+
+# ==========================================
+# 🔗 INLINE QUERY HANDLER (REFERAL ULASHISH)
+# ==========================================
+@bot.inline_handler(func=lambda query: True)
+def query_text(inline_query):
+    try:
+        # switch_inline_query orqali kelgan foydalanuvchi ID raqami
+        user_id = inline_query.query.strip()
+        if not user_id or not user_id.isdigit():
+            user_id = str(inline_query.from_user.id)
+            
+        referal_link = f"https://t.me/Openbudget24_bot?start={user_id}"
+        
+        # Telegram boshiga @username ni qo'shsa ham, matn faqat havola ko'rinishida ketadi
+        msg_content = InputTextMessageContent(
+            message_text=f"{referal_link}\n\n🔥 Open Budget botida ovoz berib pul ishlang! Kirish uchun ustiga bosing.",
+            disable_web_page_preview=False
+        )
+        
+        result = InlineQueryResultArticle(
+            id='1',
+            title="🔗 Taklif havolasini yuborish",
+            description="Do'stlaringizga yuborish uchun shu yerga bosing",
+            input_message_content=msg_content,
+            thumb_url="https://telegram.org/img/t_logo.png"
+        )
+        
+        bot.answer_inline_query(inline_query.id, [result], cache_time=1)
+    except Exception as e:
+        print(f"Inline xatolik: {e}")
 
 # ==========================================
 # 📭 MULTIMEDIA VA MATNLAR ISHLOVCHI
