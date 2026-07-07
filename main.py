@@ -1,4 +1,4 @@
-[7/6/2026 11:09 PM] projects: import telebot
+import telebot
 import time
 import os
 import sqlite3
