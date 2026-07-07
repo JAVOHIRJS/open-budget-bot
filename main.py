@@ -292,7 +292,7 @@ def process_menu_logic(message):
         else:
             update_user(user_id, {"holat": "kutish_karta"})
             bot.send_message(user_id, "💳 Pulni yechish uchun plastik karta raqamingizni yoki telefon raqamingizni kiriting:")
-            elif text == "🔗 Referal ssilka":
+        elif text == "🔗 Referal ssilka":
         bot_info = bot.get_me()
         referal_link = f"https://t.me/{bot_info.username}?start={user_id}"
         
